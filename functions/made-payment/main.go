@@ -5,15 +5,20 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/juanduran2421/technical-proyect/shared"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	"github.com/aws/aws-sdk-go/service/secretsmanager/secretsmanageriface"
+	"technical-proyect/shared"
 )
 
 var (
+	secretsClient secretsmanageriface.SecretsManagerAPI
+
 	dynamoDbObj = &dynamodb.Client{}
 	tableName   = "technical-test-users"
 
@@ -25,10 +30,27 @@ type request struct {
 	err error
 }
 
-func (req *request) madePayment(ctx context.Context, paymentInfo *shared.PaymentInput) error {
-	err := shared.MadePaymentRequest(paymentInfo)
+func getPaySafeSecret() (string, error) {
+	input := &secretsmanager.GetSecretValueInput{
+		SecretId:     aws.String("paysafe-token"),
+		VersionStage: aws.String("AWSCURRENT"),
+	}
 
-	return err
+	result, err := secretsClient.GetSecretValue(input)
+	if err != nil {
+		return "", err
+	}
+
+	return aws.StringValue(result.SecretString), nil
+}
+
+func (req *request) madePayment(ctx context.Context, paymentInfo *shared.PaymentInput) error {
+	token, err := getPaySafeSecret()
+	if err != nil {
+		return err
+	}
+
+	return shared.MadePaymentRequest(paymentInfo, token)
 }
 
 func parseRequest(body string) (*shared.PaymentInput, error) {
@@ -61,6 +83,8 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (*eve
 
 	err = createUserRequest.madePayment(ctx, paymentInfo)
 	if err != nil {
+		fmt.Println("InternalServerError", err)
+
 		return shared.NewInternalServerError(req.Headers), nil
 	}
 
@@ -68,8 +92,8 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (*eve
 }
 
 func main() {
-	cfg, _ := config.LoadDefaultConfig(context.TODO())
-	dynamoDbObj = dynamodb.NewFromConfig(cfg)
+	cfg := &aws.Config{}
+	secretsClient = secretsmanager.New(session.Must(session.NewSession(cfg)))
 
 	lambda.Start(HandleRequest)
 }
