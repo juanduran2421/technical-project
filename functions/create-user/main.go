@@ -32,9 +32,9 @@ var (
 		validator.ContainsAtLeast("123456789", 1, nil),
 	)
 
-	ErrInvalidRequestBody      = errors.New("invalid json body")
-	ErrInvalidEmail            = errors.New("invalid email")
-	ErrInvalidUserAlreadyExits = errors.New("user already exits")
+	errInvalidRequestBody      = errors.New("invalid json body")
+	errInvalidEmail            = errors.New("invalid email")
+	errInvalidUserAlreadyExits = errors.New("user already exits")
 )
 
 type request struct {
@@ -49,7 +49,7 @@ func validateParams(user *shared.UserModelAuth) error {
 
 	email := user.Username
 	if !emailRegexp.MatchString(email) {
-		return ErrInvalidEmail
+		return errInvalidEmail
 	}
 
 	return nil
@@ -81,7 +81,7 @@ func (req *request) saveUser(ctx context.Context, userInput *shared.UserModelAut
 
 	var ccFailed *types.ConditionalCheckFailedException
 	if errors.As(err, &ccFailed) {
-		return shared.NewInvalidRequestError(ErrInvalidUserAlreadyExits, req.Headers)
+		return shared.NewInvalidRequestError(errInvalidUserAlreadyExits, req.Headers)
 
 	}
 
@@ -105,6 +105,7 @@ func parseRequest(body string) (*shared.UserModelAuth, error) {
 	return userModel, nil
 }
 
+// HandleRequest handler of the apiGateway request
 func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	createUserRequest := &request{
 		APIGatewayProxyRequest: &req,
@@ -114,7 +115,7 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (*eve
 	if err != nil {
 		fmt.Println("ParseRequestError", err)
 
-		return shared.NewInvalidRequestError(ErrInvalidRequestBody, req.Headers), nil
+		return shared.NewInvalidRequestError(errInvalidRequestBody, req.Headers), nil
 	}
 
 	err = validateParams(user)

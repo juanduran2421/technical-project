@@ -23,10 +23,13 @@ type UserModelAuth struct {
 	Password string `json:"password"`
 }
 
+// CardExpiration expiration of the credit card
 type CardExpiration struct {
 	Month int `json:"month"`
 	Year  int `json:"year"`
 }
+
+// CardDetails card info to make the payment
 type CardDetails struct {
 	CardExpirationDate *CardExpiration `json:"cardExpiry"`
 	Cvv                string          `json:"cvv,omitempty"`
@@ -34,6 +37,7 @@ type CardDetails struct {
 	CardNum            string          `json:"cardNum,omitempty"`
 }
 
+// BillingInfo billing info of the owner of the card
 type BillingInfo struct {
 	Zip     string `json:"zip"`
 	Street  string `json:"street"`
@@ -42,12 +46,14 @@ type BillingInfo struct {
 	City    string `json:"city"`
 }
 
+// Profile info of the owner of the card
 type Profile struct {
 	FirstName string `json:"firstName,omitempty"`
 	LastName  string `json:"lastName,omitempty"`
 	Email     string `json:"email,omitempty"`
 }
 
+// PaymentInput input of the payment to make the request
 type PaymentInput struct {
 	MerchantRefNum string       `json:"merchantRefNum"`
 	Amount         int          `json:"amount"`
@@ -59,6 +65,7 @@ type PaymentInput struct {
 	Profile        *Profile     `json:"profile"`
 }
 
+// PaymentOutput output of the payment to save in the storage
 type PaymentOutput struct {
 	PaymentID       string       `json:"payment_id"`
 	Username        string       `json:"username"`
@@ -71,22 +78,23 @@ type PaymentOutput struct {
 	CVVVerification string       `json:"cvvVerification"`
 }
 
-type RequestFailed struct {
-	ID    string `json:"id"`
-	Error struct {
-		Code    string `json:"code"`
-		Message string `json:"message"`
-		Links   []struct {
-			Rel  string `json:"rel"`
-			Href string `json:"href"`
-		} `json:"links"`
-	} `json:"error"`
-	Links []struct {
+// ErrorResponse error response from the provider
+type ErrorResponse struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+	Links   []struct {
 		Rel  string `json:"rel"`
 		Href string `json:"href"`
 	} `json:"links"`
 }
 
+// RequestFailed struct returned when the request fails
+type RequestFailed struct {
+	ID    string        `json:"id"`
+	Error ErrorResponse `json:"error"`
+}
+
+// ValidatePaymentInfo validates the fields of the payment info
 func ValidatePaymentInfo(input *PaymentInput) error {
 	if input.Card == nil {
 		return errMissingCardInfo

@@ -11,6 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.34.4
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.32.4
 	github.com/go-passwd/validator v0.0.0-20180902184246-0b4c967e436b
+	github.com/jarcoal/httpmock v1.3.1
 	github.com/stretchr/testify v1.7.2
 )
 

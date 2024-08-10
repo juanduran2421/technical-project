@@ -19,7 +19,8 @@ You can see the arch of the system in the next diagram
 - Allow refunds (This was not done due to lack of time)
 - Make the flow asynchronous, this will allow retries in case any of the aws services fail
 - Include aws resources in the repo and not use the console
-- Include test in the all lambdas and pay safe method
+- Include test in the all lambdas
+- Add the functionality to reset and change the password
 
 ### Postman collection link
 https://api.postman.com/collections/10079251-8ad66fc7-723e-4812-8ccb-4b547d2dc87d?access_key=PMAT-01J4YT7JNKQVD2QWGRTY4NQZ6E

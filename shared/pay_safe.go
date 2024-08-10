@@ -8,7 +8,8 @@ import (
 	"net/http"
 )
 
-func MadePaymentRequest(paymentInfo *PaymentInput, token string) (PaymentOutput, error) {
+// MakePaymentRequest make the request to do the payment with the provider
+func MakePaymentRequest(paymentInfo *PaymentInput, token string) (PaymentOutput, error) {
 	paymentInfo.MerchantRefNum = "merchant 03.24.17_3"
 	paymentInfo.SettleWithAuth = false
 

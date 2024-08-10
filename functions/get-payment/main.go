@@ -105,7 +105,7 @@ func (req *request) getSpecificPayment(ctx context.Context) *events.APIGatewayPr
 
 	err = attributevalue.UnmarshalMapWithOptions(resp.Item, payment, shared.DecodeWithJSONKey)
 	if err != nil {
-		fmt.Println("Unmarshal result %s: %v\n", tableName, err)
+		fmt.Printf("Unmarshal result %s: %v\n", tableName, err)
 
 		return shared.NewInternalServerError(headers)
 	}
@@ -113,6 +113,7 @@ func (req *request) getSpecificPayment(ctx context.Context) *events.APIGatewayPr
 	return shared.NewSuccessResponse(payment, headers)
 }
 
+// HandleRequest handler of the apiGateway request
 func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	createUserRequest := &request{
 		APIGatewayProxyRequest: &req,

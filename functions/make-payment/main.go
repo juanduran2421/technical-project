@@ -72,7 +72,7 @@ func (req *request) madePayment(ctx context.Context, paymentInfo *shared.Payment
 		return shared.PaymentOutput{}, err
 	}
 
-	paymentOutput, err := shared.MadePaymentRequest(paymentInfo, token)
+	paymentOutput, err := shared.MakePaymentRequest(paymentInfo, token)
 	if err != nil {
 		return shared.PaymentOutput{}, err
 	}
@@ -93,6 +93,7 @@ func parseRequest(body string) (*shared.PaymentInput, error) {
 	return paymentInfo, nil
 }
 
+// HandleRequest handler of the apiGateway request
 func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	createUserRequest := &request{
 		APIGatewayProxyRequest: &req,
