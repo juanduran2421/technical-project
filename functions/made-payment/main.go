@@ -5,19 +5,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/secretsmanager"
-	"github.com/aws/aws-sdk-go/service/secretsmanager/secretsmanageriface"
+	"net/http"
 	"technical-proyect/shared"
 )
 
 var (
-	secretsClient secretsmanageriface.SecretsManagerAPI
+	secretClient *secretsmanager.Client
 
 	dynamoDbObj = &dynamodb.Client{}
 	tableName   = "technical-test-users"
@@ -30,13 +29,13 @@ type request struct {
 	err error
 }
 
-func getPaySafeSecret() (string, error) {
+func getPaySafeSecret(ctx context.Context) (string, error) {
 	input := &secretsmanager.GetSecretValueInput{
 		SecretId:     aws.String("paysafe-token"),
 		VersionStage: aws.String("AWSCURRENT"),
 	}
 
-	result, err := secretsClient.GetSecretValue(input)
+	result, err := secretClient.GetSecretValue(ctx, input)
 	if err != nil {
 		return "", err
 	}
@@ -44,13 +43,20 @@ func getPaySafeSecret() (string, error) {
 	return aws.StringValue(result.SecretString), nil
 }
 
-func (req *request) madePayment(ctx context.Context, paymentInfo *shared.PaymentInput) error {
-	token, err := getPaySafeSecret()
+func (req *request) madePayment(ctx context.Context, paymentInfo *shared.PaymentInput) (shared.PaymentOutput, error) {
+	token, err := getPaySafeSecret(ctx)
 	if err != nil {
-		return err
+		return shared.PaymentOutput{}, err
 	}
 
-	return shared.MadePaymentRequest(paymentInfo, token)
+	paymentOutput, err := shared.MadePaymentRequest(paymentInfo, token)
+	if err != nil {
+		return shared.PaymentOutput{}, err
+	}
+
+	paymentOutput.Username = req.RequestContext.Authorizer["username"].(string)
+
+	return paymentOutput, nil
 }
 
 func parseRequest(body string) (*shared.PaymentInput, error) {
@@ -73,27 +79,45 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (*eve
 	if err != nil {
 		fmt.Println("ParseRequestError", err)
 
-		return shared.NewInvalidRequestError(ErrInvalidRequestBody, req.Headers), nil
+		return &events.APIGatewayProxyResponse{
+			StatusCode: http.StatusOK,
+			Body:       ".......",
+			Headers:    req.Headers,
+		}, nil
 	}
 
 	err = shared.ValidatePaymentInfo(paymentInfo)
 	if err != nil {
-		return shared.NewInvalidRequestError(err, req.Headers), nil
+		return &events.APIGatewayProxyResponse{
+			StatusCode: http.StatusOK,
+			Body:       "dasdasdasd",
+			Headers:    req.Headers,
+		}, nil
 	}
 
-	err = createUserRequest.madePayment(ctx, paymentInfo)
+	paymentOutput, err := createUserRequest.madePayment(ctx, paymentInfo)
 	if err != nil {
 		fmt.Println("InternalServerError", err)
 
-		return shared.NewInternalServerError(req.Headers), nil
+		return &events.APIGatewayProxyResponse{
+			StatusCode: http.StatusOK,
+			Body:       "lsalalslaslsl",
+			Headers:    req.Headers,
+		}, nil
 	}
 
-	return shared.NewSuccessResponse(paymentInfo, req.Headers), nil
+	fmt.Println("paymentOutput", paymentOutput)
+
+	return &events.APIGatewayProxyResponse{
+		StatusCode: http.StatusOK,
+		Body:       "asdasdasdasdas",
+		Headers:    req.Headers,
+	}, nil
 }
 
 func main() {
-	cfg := &aws.Config{}
-	secretsClient = secretsmanager.New(session.Must(session.NewSession(cfg)))
+	config, _ := config.LoadDefaultConfig(context.TODO())
+	secretClient = secretsmanager.NewFromConfig(config)
 
 	lambda.Start(HandleRequest)
 }

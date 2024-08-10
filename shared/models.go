@@ -30,6 +30,7 @@ type CardExpiration struct {
 type CardDetails struct {
 	CardExpiry *CardExpiration `json:"cardExpiry"`
 	Cvv        string          `json:"cvv"`
+	LastDigits string          `json:"lastDigits"`
 	CardNum    string          `json:"cardNum"`
 }
 
@@ -59,12 +60,31 @@ type PaymentInput struct {
 }
 
 type PaymentOutput struct {
-	PaymentID      string       `json:"payment_id"`
-	Status         string       `json:"status"`
-	ErrorMessage   string       `json:"error_message,omitempty"`
-	Card           *CardDetails `json:"card"`
-	BillingDetails *BillingInfo `json:"billingDetails"`
-	Profile        *Profile     `json:"profile"`
+	PaymentID       string       `json:"payment_id"`
+	Username        string       `json:"username"`
+	Status          string       `json:"status"`
+	ErrorMessage    string       `json:"error_message,omitempty"`
+	Card            *CardDetails `json:"card"`
+	BillingDetails  *BillingInfo `json:"billingDetails"`
+	Profile         *Profile     `json:"profile"`
+	AvsResponse     string       `json:"avsResponse"`
+	CVVVerification string       `json:"cvvVerification"`
+}
+
+type RequestFailed struct {
+	ID    string `json:"id"`
+	Error struct {
+		Code    string `json:"code"`
+		Message string `json:"message"`
+		Links   []struct {
+			Rel  string `json:"rel"`
+			Href string `json:"href"`
+		} `json:"links"`
+	} `json:"error"`
+	Links []struct {
+		Rel  string `json:"rel"`
+		Href string `json:"href"`
+	} `json:"links"`
 }
 
 func ValidatePaymentInfo(input *PaymentInput) error {
