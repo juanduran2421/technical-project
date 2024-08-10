@@ -18,17 +18,22 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/go-passwd/validator"
 )
 
 var (
 	dynamoDbObj = &dynamodb.Client{}
 	tableName   = "technical-test-users"
 
-	emailRegexp = regexp.MustCompile("\\A[a-zA-Z0-9\\.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]+)*\\z")
+	emailRegexp       = regexp.MustCompile("\\A[a-zA-Z0-9\\.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]+)*\\z")
+	passwordValidator = validator.New(
+		validator.MinLength(8, nil),
+		validator.ContainsAtLeast("abcdefghijklmnopqrstuvwxyz", 1, nil),
+		validator.ContainsAtLeast("123456789", 1, nil),
+	)
 
 	ErrInvalidRequestBody      = errors.New("invalid json body")
 	ErrInvalidEmail            = errors.New("invalid email")
-	ErrInvalidPassword         = errors.New("invalid password")
 	ErrInvalidUserAlreadyExits = errors.New("user already exits")
 )
 
@@ -38,9 +43,8 @@ type request struct {
 }
 
 func validateParams(user *shared.UserModelAuth) error {
-	password := user.Password
-	if password == "" || len(password) < 16 {
-		return ErrInvalidPassword
+	if err := passwordValidator.Validate(user.Password); err != nil {
+		return err
 	}
 
 	email := user.Username

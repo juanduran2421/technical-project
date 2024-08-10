@@ -28,10 +28,10 @@ type CardExpiration struct {
 	Year  int `json:"year"`
 }
 type CardDetails struct {
-	CardExpiry *CardExpiration `json:"cardExpiry"`
-	Cvv        string          `json:"cvv,omitempty"`
-	LastDigits string          `json:"lastDigits"`
-	CardNum    string          `json:"cardNum,omitempty"`
+	CardExpirationDate *CardExpiration `json:"cardExpiry"`
+	Cvv                string          `json:"cvv,omitempty"`
+	LastDigits         string          `json:"lastDigits"`
+	CardNum            string          `json:"cardNum,omitempty"`
 }
 
 type BillingInfo struct {
@@ -112,16 +112,16 @@ func validateCardInfo(details *CardDetails) error {
 		return errMissingCardNumber
 	}
 
-	if details.CardExpiry == nil {
+	if details.CardExpirationDate == nil {
 		return errMissingExpirationInfo
 	}
 
 	nowYear := time.Now().Year()
-	if details.CardExpiry.Year < nowYear {
+	if details.CardExpirationDate.Year < nowYear {
 		return errInvalidYearNumber
 	}
 
-	if details.CardExpiry.Year == nowYear && details.CardExpiry.Month < int(time.Now().Month()) {
+	if details.CardExpirationDate.Year == nowYear && details.CardExpirationDate.Month < int(time.Now().Month()) {
 		return errInvalidMonthNumber
 	}
 
