@@ -22,11 +22,6 @@ var (
 	tableName   = "technical-test-users"
 )
 
-// DecodeWithJSONKey use the tag in the struct to decode the item
-func DecodeWithJSONKey(do *attributevalue.DecoderOptions) {
-	do.TagKey = "json"
-}
-
 func isAuthorized(ctx context.Context, username string, password string) (shared.UserModelAuth, bool) {
 	user := shared.UserModelAuth{}
 
@@ -45,7 +40,7 @@ func isAuthorized(ctx context.Context, username string, password string) (shared
 		return shared.UserModelAuth{}, false
 	}
 
-	err = attributevalue.UnmarshalMapWithOptions(resp.Item, &user, DecodeWithJSONKey)
+	err = attributevalue.UnmarshalMapWithOptions(resp.Item, &user, shared.DecodeWithJSONKey)
 	if err != nil {
 		fmt.Printf("Unmarshal result %s: %v\n", tableName, err)
 
@@ -67,7 +62,7 @@ func handleRequest(ctx context.Context, apiGatewayRequest events.APIGatewayProxy
 	if isAuth {
 		claims := make(map[string]interface{})
 
-		claims["client_id"] = user.ClientID
+		claims["username"] = user.Username
 
 		return events.APIGatewayV2CustomAuthorizerSimpleResponse{IsAuthorized: true, Context: claims}, nil
 	}

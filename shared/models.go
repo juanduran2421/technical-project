@@ -2,6 +2,7 @@ package shared
 
 import (
 	"errors"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"time"
 )
 
@@ -19,7 +20,6 @@ var (
 // UserModelAuth basic struct of the users saved
 type UserModelAuth struct {
 	Username string `json:"username"`
-	ClientID string `json:"client_id"`
 	Password string `json:"password"`
 }
 
@@ -29,9 +29,9 @@ type CardExpiration struct {
 }
 type CardDetails struct {
 	CardExpiry *CardExpiration `json:"cardExpiry"`
-	Cvv        string          `json:"cvv"`
+	Cvv        string          `json:"cvv,omitempty"`
 	LastDigits string          `json:"lastDigits"`
-	CardNum    string          `json:"cardNum"`
+	CardNum    string          `json:"cardNum,omitempty"`
 }
 
 type BillingInfo struct {
@@ -126,4 +126,14 @@ func validateCardInfo(details *CardDetails) error {
 	}
 
 	return nil
+}
+
+// DecodeWithJSONKey use the tag in the struct to decode the item
+func DecodeWithJSONKey(do *attributevalue.DecoderOptions) {
+	do.TagKey = "json"
+}
+
+// EncodeWithJSONKey use the tag in the struct to encode the item
+func EncodeWithJSONKey(eo *attributevalue.EncoderOptions) {
+	eo.TagKey = "json"
 }

@@ -75,3 +75,26 @@ func NewInternalServerError(headers map[string]string) *events.APIGatewayProxyRe
 		Headers:    headers,
 	}
 }
+
+func NewNotFoundError(err error, headers map[string]string) *events.APIGatewayProxyResponse {
+	response := map[string]interface{}{
+		"code":      10404,
+		"http_code": 404,
+		"message":   err.Error(),
+	}
+
+	jsonResponse, err := json.Marshal(response)
+	if err != nil {
+		return &events.APIGatewayProxyResponse{
+			StatusCode: http.StatusInternalServerError,
+			Body:       errInternalServerError.Error(),
+			Headers:    headers,
+		}
+	}
+
+	return &events.APIGatewayProxyResponse{
+		StatusCode: http.StatusNotFound,
+		Body:       string(jsonResponse),
+		Headers:    headers,
+	}
+}

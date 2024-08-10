@@ -7,8 +7,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-
 	"regexp"
+
+	"technical-proyect/shared"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -17,7 +18,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"technical-proyect/shared"
 )
 
 var (
@@ -51,11 +51,6 @@ func validateParams(user *shared.UserModelAuth) error {
 	return nil
 }
 
-// EncodeWithJSONKey use the tag in the struct to encode the item
-func EncodeWithJSONKey(eo *attributevalue.EncoderOptions) {
-	eo.TagKey = "json"
-}
-
 func (req *request) saveUser(ctx context.Context, userInput *shared.UserModelAuth) *events.APIGatewayProxyResponse {
 	checksum := sha256.Sum256([]byte(userInput.Password))
 	encodedPassword := base64.StdEncoding.EncodeToString(checksum[:])
@@ -65,7 +60,7 @@ func (req *request) saveUser(ctx context.Context, userInput *shared.UserModelAut
 		Password: encodedPassword,
 	}
 
-	item, err := attributevalue.MarshalMapWithOptions(user, EncodeWithJSONKey)
+	item, err := attributevalue.MarshalMapWithOptions(user, shared.EncodeWithJSONKey)
 	if err != nil {
 		fmt.Println("MarshalMapWithOptionsError", err)
 

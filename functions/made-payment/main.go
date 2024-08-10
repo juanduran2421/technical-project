@@ -3,30 +3,53 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
+
+	"technical-proyect/shared"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/aws/aws-sdk-go/aws"
-	"net/http"
-	"technical-proyect/shared"
 )
 
 var (
 	secretClient *secretsmanager.Client
 
 	dynamoDbObj = &dynamodb.Client{}
-	tableName   = "technical-test-users"
-
-	ErrInvalidRequestBody = errors.New("invalid json body")
+	tableName   = "technical-test-payments"
 )
 
 type request struct {
 	*events.APIGatewayProxyRequest
 	err error
+}
+
+func (req *request) savePayment(ctx context.Context, paymentOutput *shared.PaymentOutput) *events.APIGatewayProxyResponse {
+	item, err := attributevalue.MarshalMapWithOptions(paymentOutput, shared.EncodeWithJSONKey)
+	if err != nil {
+		fmt.Println("MarshalMapWithOptionsError", err)
+
+		return shared.NewInvalidRequestError(err, req.Headers)
+	}
+
+	_, err = dynamoDbObj.PutItem(ctx,
+		&dynamodb.PutItemInput{
+			Item:                item,
+			TableName:           aws.String(tableName),
+			ConditionExpression: aws.String("attribute_not_exists(payment_id)"),
+		},
+	)
+	if err != nil {
+		fmt.Println("PutItemError", err)
+
+		return shared.NewInternalServerError(req.Headers)
+	}
+
+	return shared.NewSuccessResponse(paymentOutput, req.Headers)
 }
 
 func getPaySafeSecret(ctx context.Context) (string, error) {
@@ -54,7 +77,7 @@ func (req *request) madePayment(ctx context.Context, paymentInfo *shared.Payment
 		return shared.PaymentOutput{}, err
 	}
 
-	paymentOutput.Username = req.RequestContext.Authorizer["username"].(string)
+	paymentOutput.Username = req.Headers["username"]
 
 	return paymentOutput, nil
 }
@@ -79,45 +102,28 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (*eve
 	if err != nil {
 		fmt.Println("ParseRequestError", err)
 
-		return &events.APIGatewayProxyResponse{
-			StatusCode: http.StatusOK,
-			Body:       ".......",
-			Headers:    req.Headers,
-		}, nil
+		return shared.NewInvalidRequestError(err, req.Headers), nil
 	}
 
 	err = shared.ValidatePaymentInfo(paymentInfo)
 	if err != nil {
-		return &events.APIGatewayProxyResponse{
-			StatusCode: http.StatusOK,
-			Body:       "dasdasdasd",
-			Headers:    req.Headers,
-		}, nil
+		return shared.NewInvalidRequestError(err, req.Headers), nil
 	}
 
 	paymentOutput, err := createUserRequest.madePayment(ctx, paymentInfo)
 	if err != nil {
 		fmt.Println("InternalServerError", err)
 
-		return &events.APIGatewayProxyResponse{
-			StatusCode: http.StatusOK,
-			Body:       "lsalalslaslsl",
-			Headers:    req.Headers,
-		}, nil
+		return shared.NewInternalServerError(req.Headers), nil
 	}
 
-	fmt.Println("paymentOutput", paymentOutput)
-
-	return &events.APIGatewayProxyResponse{
-		StatusCode: http.StatusOK,
-		Body:       "asdasdasdasdas",
-		Headers:    req.Headers,
-	}, nil
+	return createUserRequest.savePayment(ctx, &paymentOutput), nil
 }
 
 func main() {
 	config, _ := config.LoadDefaultConfig(context.TODO())
 	secretClient = secretsmanager.NewFromConfig(config)
+	dynamoDbObj = dynamodb.NewFromConfig(config)
 
 	lambda.Start(HandleRequest)
 }

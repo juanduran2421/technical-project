@@ -13,7 +13,6 @@ func MadePaymentRequest(paymentInfo *PaymentInput, token string) (PaymentOutput,
 	paymentInfo.SettleWithAuth = false
 
 	url := "https://api.test.paysafe.com/cardpayments/v1/accounts/1002776850/auths/"
-	fmt.Println("URL:>", url)
 
 	paymentBytes, err := json.Marshal(paymentInfo)
 	if err != nil {
@@ -46,10 +45,6 @@ func MadePaymentRequest(paymentInfo *PaymentInput, token string) (PaymentOutput,
 		return parseFailedResponse(paymentInfo, body)
 	}
 
-	fmt.Println("response Status:", resp.Status)
-	fmt.Println("response Headers:", resp.Header)
-	fmt.Println("response Body:", string(body))
-
 	return parseSuccessResponse(body)
 }
 
@@ -64,6 +59,12 @@ func parseFailedResponse(paymentInfo *PaymentInput, body []byte) (PaymentOutput,
 
 	paymentOutput.PaymentID = output.ID
 	paymentOutput.Card = paymentInfo.Card
+	paymentOutput.Card.Cvv = ""
+
+	if len(paymentOutput.Card.CardNum) > 4 {
+		paymentOutput.Card.CardNum = ""
+		paymentOutput.Card.LastDigits = paymentOutput.Card.CardNum[len(paymentOutput.Card.CardNum)-4:]
+	}
 	paymentOutput.BillingDetails = paymentInfo.BillingDetails
 	paymentOutput.Profile = paymentInfo.Profile
 
@@ -80,6 +81,14 @@ func parseSuccessResponse(body []byte) (PaymentOutput, error) {
 	if err != nil {
 		return PaymentOutput{}, err
 	}
+
+	mapResponse := map[string]interface{}{}
+	err = json.Unmarshal(body, &mapResponse)
+	if err != nil {
+		return PaymentOutput{}, err
+	}
+
+	paymentOutput.PaymentID = mapResponse["id"].(string)
 
 	return paymentOutput, nil
 }
