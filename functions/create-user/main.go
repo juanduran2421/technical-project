@@ -66,7 +66,7 @@ func (req *request) saveUser(ctx context.Context, userInput *shared.UserModelAut
 
 	item, err := attributevalue.MarshalMapWithOptions(user, shared.EncodeWithJSONKey)
 	if err != nil {
-		fmt.Println("MarshalMapWithOptionsError", err)
+		fmt.Printf("Marshal user input error %v\n", err)
 
 		return shared.NewInternalServerError(req.Headers)
 	}
@@ -86,7 +86,7 @@ func (req *request) saveUser(ctx context.Context, userInput *shared.UserModelAut
 	}
 
 	if err != nil {
-		fmt.Println("PutItemError", err)
+		fmt.Printf("Put user error %v\n", err)
 
 		return shared.NewInternalServerError(req.Headers)
 	}
@@ -113,7 +113,7 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (*eve
 
 	user, err := parseRequest(createUserRequest.Body)
 	if err != nil {
-		fmt.Println("ParseRequestError", err)
+		fmt.Printf("Parse create user request error %v\n", err)
 
 		return shared.NewInvalidRequestError(errInvalidRequestBody, req.Headers), nil
 	}

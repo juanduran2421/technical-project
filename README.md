@@ -2,7 +2,7 @@
 
 # Service used 
 
-The aws service was used to allocate the code resources
+The aws service was used to allocate the code resources and I used the paysafe sandbox API to process the credit cards transactions (https://developer.paysafe.com/en/api-docs/cards/)
 
 The main reasons for using this cloud service were the following:
 - AWS API Gateway allows creating and making the authorization flow easy and scalable
@@ -18,7 +18,7 @@ You can see the arch of the system in the next diagram
 - Improve the authorization flow to avoid saving the password in dynamo (Currently it is saved as a hash to avoid saving plain text)
 - Allow refunds (This was not done due to lack of time)
 - Make the flow asynchronous, this will allow retries in case any of the aws services fail
-- Include aws resources in the repo and not use the console
+- Include aws resources in the repo and not use the console (Infrastructure as code)
 - Include test in the all lambdas
 - Add the functionality to reset and change the password
 

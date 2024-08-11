@@ -51,7 +51,7 @@ func (req *request) getListOfPayment(ctx context.Context) *events.APIGatewayProx
 		},
 	)
 	if err != nil {
-		fmt.Println("PutItemError", err)
+		fmt.Printf("Put payment error %v\n", err)
 
 		return shared.NewInternalServerError(headers)
 	}
@@ -92,7 +92,7 @@ func (req *request) getSpecificPayment(ctx context.Context) *events.APIGatewayPr
 		},
 	)
 	if err != nil {
-		fmt.Println("PutItemError", err)
+		fmt.Printf("Get payment error %v\n", err)
 
 		return shared.NewInternalServerError(headers)
 	}

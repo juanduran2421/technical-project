@@ -31,7 +31,7 @@ type request struct {
 func (req *request) savePayment(ctx context.Context, paymentOutput *shared.PaymentOutput) *events.APIGatewayProxyResponse {
 	item, err := attributevalue.MarshalMapWithOptions(paymentOutput, shared.EncodeWithJSONKey)
 	if err != nil {
-		fmt.Println("MarshalMapWithOptionsError", err)
+		fmt.Printf("Marshal payment error %v\n", err)
 
 		return shared.NewInvalidRequestError(err, req.Headers)
 	}
@@ -44,7 +44,7 @@ func (req *request) savePayment(ctx context.Context, paymentOutput *shared.Payme
 		},
 	)
 	if err != nil {
-		fmt.Println("PutItemError", err)
+		fmt.Printf("Put payment error %v\n", err)
 
 		return shared.NewInternalServerError(req.Headers)
 	}
@@ -101,7 +101,7 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (*eve
 
 	paymentInfo, err := parseRequest(createUserRequest.Body)
 	if err != nil {
-		fmt.Println("ParseRequestError", err)
+		fmt.Printf("Parse payment request error %v\n", err)
 
 		return shared.NewInvalidRequestError(err, req.Headers), nil
 	}
@@ -113,7 +113,7 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (*eve
 
 	paymentOutput, err := createUserRequest.madePayment(ctx, paymentInfo)
 	if err != nil {
-		fmt.Println("InternalServerError", err)
+		fmt.Printf("Internal server error %v\n", err)
 
 		return shared.NewInternalServerError(req.Headers), nil
 	}

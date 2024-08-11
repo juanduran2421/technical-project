@@ -35,7 +35,7 @@ func isAuthorized(ctx context.Context, username string, password string) (shared
 			TableName: aws.String(tableName)},
 	)
 	if err != nil {
-		fmt.Printf("Cannot Get Item from Table %s: %v\n", tableName, err)
+		fmt.Printf("Get user error %v\n", err)
 
 		return shared.UserModelAuth{}, false
 	}
